@@ -28,25 +28,35 @@
 </head>
 <body>
     <div id="main" class="graficos">
-        <!-- <img id="cpu" class="img" src="graficos/cpu.png" alt="">
-        <img id="ram" class="img" src="graficos/ram.png" alt="">
-        <img id="disk" class="img" src="graficos/disk.png" alt=""> -->
+        <canvas onload="drawImage('graficos/cpu.png')"id="cpu" class="img"  alt=""></canvas>
     </div>
+    <canvas id="ram" class="img" src="graficos/ram.png" alt=""></canvas>
+    <canvas id="disk" class="img" src="graficos/disk.png" alt=""></canvas>
 </body>
 </html>
 <script>
-    setInterval(()=>{
-        reloadGraphs();
-    },1000)
+let canvas = document.getElementById("cpu");
+let ctx = canvas.getContext("2d"); 
+let newImage = new Image() 
+newImage.src = 'graficos/cpu.png'
+newImage.onload = () => {
+    // Draw the image onto the context
+    ctx.drawImage(newImage, 0, 0, 250, 208);
+}
+setInterval(()=>{
+    document.getElementById('cpu').remove();
+    cpu = document.createElement('canvas');
+    cpu.setAttribute('id', 'cpu');
+    cpu.setAttribute('class', 'img');
+    main.appendChild(cpu);
 
-    function reloadGraphs(){
-        console.log("oi")
-        main = document.getElementById("main")
-        main.innerHTML = ""
-        main.innerHTML = `
-        <img id="cpu" class="img" src="graficos/cpu.png" alt="">
-        <img id="ram" class="img" src="graficos/ram.png" alt="">
-        <img id="disk" class="img" src="graficos/disk.png" alt="">
-        `
+    let newImage = new Image() 
+    newImage.src = 'graficos/cpu.png'
+    newImage.onload = () => {
+        // Draw the image onto the context
+        ctx.drawImage(newImage, 0, 0, 250, 208);
     }
+},500)
+
+
 </script>

@@ -4,17 +4,49 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .graficos{
+            width: 80%;
+            display: grid;
+            grid-template-columns: auto auto;
+            /* justify-content: space-between;
+            align-items: center; */
+        }
+
+        .img {
+            width: 100%;
+        }
+
+    </style>
     <title>Teste</title>
 </head>
 <body>
-    <div id="main">
-
+    <div id="main" class="graficos">
+        <!-- <img id="cpu" class="img" src="graficos/cpu.png" alt="">
+        <img id="ram" class="img" src="graficos/ram.png" alt="">
+        <img id="disk" class="img" src="graficos/disk.png" alt=""> -->
     </div>
 </body>
 </html>
 <script>
-    function carregar(){
-        img_link = 'blabla'
-        main.innerHTML = `<img src="${img_link}">`
+    setInterval(()=>{
+        reloadGraphs();
+    },1000)
+
+    function reloadGraphs(){
+        console.log("oi")
+        main = document.getElementById("main")
+        main.innerHTML = ""
+        main.innerHTML = `
+        <img id="cpu" class="img" src="graficos/cpu.png" alt="">
+        <img id="ram" class="img" src="graficos/ram.png" alt="">
+        <img id="disk" class="img" src="graficos/disk.png" alt="">
+        `
     }
 </script>

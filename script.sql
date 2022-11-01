@@ -1,0 +1,9 @@
+DROP DATABASE IF EXISTS testeR;
+CREATE DATABASE testeR;
+
+USE testeR;
+
+CREATE TABLE imagem (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    
+);

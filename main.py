@@ -9,13 +9,33 @@ import psutil as ps
 from collections import deque
 from time import sleep
 from datetime import datetime 
+
 # Bibliotecas para conexão com r
 import pandas as pd
 import rpy2
 import rpy2.robjects as ro
+import rpy2.robjects.packages as rpackages
 from rpy2.robjects import pandas2ri
 from rpy2.robjects.conversion import localconverter
 from rpy2.robjects.packages import importr, data
+from rpy2.robjects.vectors import StrVector
+
+
+
+# Importando pacote base do R
+base = importr('base')
+
+# Instalando packages do R 
+utils = importr('utils')
+utils.chooseCRANmirror(ind=1) # CRAN é um network de arquivos onde são mantidos pacotes em R
+packnames = ["ggplot2", "lazyeval", "grDevices"] # Pacotes que serão utilizados
+
+# Verificando quais pacotes já estão instalados e instalando os não instalados
+packages_a_instalar = [packname for packname in packnames if not rpackages.isinstalled(packname)]
+if len(packages_a_instalar) > 0:
+  utils.install_packages(StrVector(packages_a_instalar))
+
+
 
 # Biblioteca de gráficos em r
 import rpy2.robjects.lib.ggplot2 as ggplot2
@@ -23,8 +43,8 @@ import rpy2.robjects.lib.ggplot2 as ggplot2
 # Biblioteca para conexão com mysql
 import mysql.connector as sql
 
-base = importr('base')
-agora = datetime.now() 
+
+
 cont = 0
 
 ids = deque([])
@@ -69,6 +89,7 @@ while cont < 100:
     pp = (ggplot2.ggplot(dadosMaquina) +
         ggplot2.aes_string(x='id', y=metrica) +
         ggplot2.geom_point() +
+        ggplot2.geom_line() +
         ggplot2.geom_smooth(method = 'lm'))
 
     pp.plot()

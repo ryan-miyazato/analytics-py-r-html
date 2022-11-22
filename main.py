@@ -36,7 +36,6 @@ if len(packages_a_instalar) > 0:
   utils.install_packages(StrVector(packages_a_instalar))
 
 
-
 # Biblioteca de gráficos em r
 import rpy2.robjects.lib.ggplot2 as ggplot2
 
@@ -45,29 +44,41 @@ import mysql.connector as sql
 
 
 
-cont = 0
+def main():
+  capturarDados()
 
-ids = deque([])
-cpuPercent = deque([])
-ramPercent = deque([])
-diskPercent = deque([])
 
-while cont < 100:
 
-  # Captura de dados de máquina
+def capturarDados():
 
-  ids.append(cont)
-  cpuPercent.append(ps.cpu_percent())
-  ramPercent.append(ps.virtual_memory().percent)
-  diskPercent.append(ps.disk_usage("/").percent)
+  cont = 0
 
-  print(ids)
-  print(cpuPercent)
-  print(ramPercent)
-  print(diskPercent)
+  ids = deque([])
+  cpuPercent = deque([])
+  ramPercent = deque([])
+  diskPercent = deque([])
+
+
+  while cont < 100:
+
+    # Captura de dados de máquina
+
+    ids.append(cont)
+    cpuPercent.append(ps.cpu_percent())
+    ramPercent.append(ps.virtual_memory().percent)
+    diskPercent.append(ps.disk_usage("/").percent)
+
+    print(f"Captura {cont}\n\n")
+    print(ids)
+    print(cpuPercent)
+    print(ramPercent)
+    print(diskPercent)
+
+    sleep(1)
+    cont += 1
 
   
-    # Data frame (pandas) de exemplo
+  # Data frame (pandas) de exemplo
   pd_df = pd.DataFrame({'id': ids,
                         'cpu': cpuPercent,
                         'ram': ramPercent,
@@ -77,13 +88,20 @@ while cont < 100:
   with localconverter(ro.default_converter + pandas2ri.converter):
     dadosMaquina = ro.conversion.py2rpy(pd_df)
 
+  
+  plotarGrafico(dadosMaquina)
+
+
+
+def plotarGrafico(dadosMaquina):
+
   metricas = ["cpu","ram","disk"]
 
   for metrica in metricas:
 
     # Gera um .png vazio
     grdevices = importr('grDevices')
-    grdevices.png(file=f"~/Music/analytics-py-r-html/graficos/{metrica}.png", width=1024, height=512)
+    grdevices.png(file=f"./graficos/{metrica}.png", width=1024, height=512)
 
     # Plota o gráfico
     pp = (ggplot2.ggplot(dadosMaquina) +
@@ -92,15 +110,18 @@ while cont < 100:
         ggplot2.geom_line() +
         ggplot2.geom_smooth(method = 'lm'))
 
+    sleep(1)
     pp.plot()
 
     # Salva o gráfico no .png
     grdevices.dev_off()
-    if cont >= 20:
-      ids.popleft()
-      cpuPercent.popleft()
-      ramPercent.popleft()
-      diskPercent.popleft()
 
-  sleep(1)
-  cont += 1
+    # if cont >= 20:
+    #   ids.popleft()
+    #   cpuPercent.popleft()
+    #   ramPercent.popleft()
+    #   diskPercent.popleft()
+
+
+# Iniciando programa
+main()

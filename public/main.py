@@ -2,6 +2,7 @@
 # pip install rpy2
 # pip install pandas
 # pip install mysql-connector-python
+# pip install pymssql
 
 
 # Biblioteca de captura de dados de máquina
@@ -39,14 +40,24 @@ if len(packages_a_instalar) > 0:
 # Biblioteca de gráficos em r
 import rpy2.robjects.lib.ggplot2 as ggplot2
 
-# Biblioteca para conexão com mysql
-import mysql.connector as sql
-
+# Biblioteca para conexão com banco de dados
+import mysql.connector
+import pymssql
 
 
 def main():
+  conectar()
   capturarDados()
 
+def conectar():
+  server = getenv("airdataserver.database.windows.net")
+  user = getenv("CloudSA9549f82c")
+  password = getenv("pi-airdata2022")
+  sql_server = pymssql.connect(server, user, password, "airdata")
+  cursor_server = sql_server.cursor()
+
+  sql = mysql.connector.connect(host="localhost", user="airdata_client", password="sptech", database="airData")
+  cursor = sql.connect()
 
 
 def capturarDados():
@@ -101,7 +112,7 @@ def plotarGrafico(dadosMaquina):
 
     # Gera um .png vazio
     grdevices = importr('grDevices')
-    grdevices.png(file=f"./graficos/{metrica}.png", width=1024, height=512)
+    grdevices.png(file=f"/home/aluno/Music/analytics-py-r-html/public/graficos/{metrica}.png", width=1024, height=512)
 
     # Plota o gráfico
     pp = (ggplot2.ggplot(dadosMaquina) +
@@ -124,4 +135,5 @@ def plotarGrafico(dadosMaquina):
 
 
 # Iniciando programa
-main()
+if __name__ == "__main__":
+  main()

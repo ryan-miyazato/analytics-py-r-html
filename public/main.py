@@ -4,12 +4,12 @@
 # pip install mysql-connector-python
 # pip install pymssql
 
-
 # Biblioteca de captura de dados de máquina
 import psutil as ps
 from collections import deque
 from time import sleep
 from datetime import datetime 
+import sys
 
 # Bibliotecas para conexão com r
 import pandas as pd
@@ -21,13 +21,14 @@ from rpy2.robjects.conversion import localconverter
 from rpy2.robjects.packages import importr, data
 from rpy2.robjects.vectors import StrVector
 
-
-
 # Importando pacote base do R
+print("IMPORTANDO BASE")
 base = importr('base')
 
 # Instalando packages do R 
+print("IMPORTANDO UTILS")
 utils = importr('utils')
+print("VERIFICANDO PACOTES")
 utils.chooseCRANmirror(ind=1) # CRAN é um network de arquivos onde são mantidos pacotes em R
 packnames = ["ggplot2", "lazyeval", "grDevices"] # Pacotes que serão utilizados
 
@@ -36,71 +37,54 @@ packages_a_instalar = [packname for packname in packnames if not rpackages.isins
 if len(packages_a_instalar) > 0:
   utils.install_packages(StrVector(packages_a_instalar))
 
-
 # Biblioteca de gráficos em r
 import rpy2.robjects.lib.ggplot2 as ggplot2
 
-# Biblioteca para conexão com banco de dados
-import mysql.connector
-import pymssql
 
+# AMBIENTE_PRODUCAO = False
+AMBIENTE_PRODUCAO = True
 
 def main():
-  conectar()
-  capturarDados()
 
-def conectar():
-  server = getenv("airdataserver.database.windows.net")
-  user = getenv("CloudSA9549f82c")
-  password = getenv("pi-airdata2022")
-  sql_server = pymssql.connect(server, user, password, "airdata")
-  cursor_server = sql_server.cursor()
-
-  sql = mysql.connector.connect(host="localhost", user="airdata_client", password="sptech", database="airData")
-  cursor = sql.connect()
+  print("Entrou na main")
+  capturarDados("cpuPercent", 69)
 
 
-def capturarDados():
+def capturarDados(metrica, componente):
 
-  cont = 0
+  bdsql, cursor = conectar()
 
-  ids = deque([])
-  cpuPercent = deque([])
-  ramPercent = deque([])
-  diskPercent = deque([])
+  LIMITE = 100
 
+  medidas = deque([])
 
-  while cont < 100:
+  # Captura de dados de máquina
 
-    # Captura de dados de máquina
-
-    ids.append(cont)
-    cpuPercent.append(ps.cpu_percent())
-    ramPercent.append(ps.virtual_memory().percent)
-    diskPercent.append(ps.disk_usage("/").percent)
-
-    print(f"Captura {cont}\n\n")
-    print(ids)
-    print(cpuPercent)
-    print(ramPercent)
-    print(diskPercent)
-
-    sleep(1)
-    cont += 1
+  if AMBIENTE_PRODUCAO:
+    query =  (f"SELECT TOP({LIMITE}) * FROM vw_{metrica} WHERE idComponente = {componente}")
+  else:
+    query = (f"SELECT * FROM vw_{metrica} WHERE idComponente = {componente} LIMIT {LIMITE}")
 
   
-  # Data frame (pandas) de exemplo
-  pd_df = pd.DataFrame({'id': ids,
-                        'cpu': cpuPercent,
-                        'ram': ramPercent,
-                        'disk': diskPercent})
+  cursor.execute(query)
 
-  # Conversor de data frame do pandas para o data frame em r
-  with localconverter(ro.default_converter + pandas2ri.converter):
-    dadosMaquina = ro.conversion.py2rpy(pd_df)
+  resposta = cursor.fetchall()
+
+  print(resposta)
+
 
   
-  plotarGrafico(dadosMaquina)
+  # # Data frame (pandas) de exemplo
+  # pd_df = pd.DataFrame({'cpu': cpuPercent,
+  #                       'ram': ramPercent,
+  #                       'disk': diskPercent})
+
+  # # Conversor de data frame do pandas para o data frame em r
+  # with localconverter(ro.default_converter + pandas2ri.converter):
+  #   dadosMaquina = ro.conversion.py2rpy(pd_df)
+
+  
+  # plotarGrafico(dadosMaquina)
 
 
 
@@ -133,6 +117,23 @@ def plotarGrafico(dadosMaquina):
     #   ramPercent.popleft()
     #   diskPercent.popleft()
 
+def conectar():
+  if AMBIENTE_PRODUCAO:
+    import pymssql 
+
+    server = "airdataserver.database.windows.net"
+    user = "CloudSA9549f82c"
+    password = "pi-airdata2022"
+
+    bdsql = pymssql.connect(server, user, password, "airdata")
+    cursor = bdsql.cursor()
+  else:
+    import mysql.connector
+    
+    bdsql = mysql.connector.connect(host="localhost", user="airdata_client", password="sptech", database="airData")
+    cursor = bdsql.cursor()
+
+  return (bdsql, cursor)
 
 # Iniciando programa
 if __name__ == "__main__":

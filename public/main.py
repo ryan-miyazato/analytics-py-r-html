@@ -44,78 +44,110 @@ import rpy2.robjects.lib.ggplot2 as ggplot2
 # AMBIENTE_PRODUCAO = False
 AMBIENTE_PRODUCAO = True
 
+# Limite de dados da query do banco de dados
+LIMITE = 100 
+
 def main():
 
-  print("Entrou na main")
-  capturarDados("cpuPercent", 69)
+  print("ENTROU NA MAIN")
+  capturarDados(sys.argv[1], sys.argv[2])
 
 
 def capturarDados(metrica, componente):
 
   bdsql, cursor = conectar()
 
-  LIMITE = 100
+  cont = 0
 
-  medidas = deque([])
+  ids = deque([])
+  idComponente = deque([])
+  macAddress = deque([])
+  horario = deque([])
+  valorLeitura = deque([])
+  unidadeMedida = deque([])
+
 
   # Captura de dados de máquina
 
   if AMBIENTE_PRODUCAO:
-    query =  (f"SELECT TOP({LIMITE}) * FROM vw_{metrica} WHERE idComponente = {componente}")
+    query =  (f"SELECT TOP({LIMITE}) * FROM vw_{metrica} WHERE idComponente = {componente} ORDER BY horario DESC")
   else:
-    query = (f"SELECT * FROM vw_{metrica} WHERE idComponente = {componente} LIMIT {LIMITE}")
+    query = (f"SELECT * FROM vw_{metrica} WHERE idComponente = {componente} ORDER BY horario DESC LIMIT {LIMITE}")
 
   
   cursor.execute(query)
-
   resposta = cursor.fetchall()
 
   print(resposta)
 
-
+  print("CONVERTENDO:")
+  for row in resposta:
+    ids.append(cont)
+    idComponente.append(row[0])
+    macAddress.append(row[1])
+    horario.append(row[2])
+    valorLeitura.append(float(row[3]))
+    unidadeMedida.append(row[4])
+    cont+=1
   
-  # # Data frame (pandas) de exemplo
-  # pd_df = pd.DataFrame({'cpu': cpuPercent,
-  #                       'ram': ramPercent,
-  #                       'disk': diskPercent})
 
-  # # Conversor de data frame do pandas para o data frame em r
-  # with localconverter(ro.default_converter + pandas2ri.converter):
-  #   dadosMaquina = ro.conversion.py2rpy(pd_df)
+  print("CRIANDO DF:")
+  # Data frame (pandas) de exemplo
+  pd_df = pd.DataFrame({'ids': ids,
+                        'idComponente': idComponente,
+                        'macAddress': macAddress,
+                        'horario': horario,
+                        'valorLeitura': valorLeitura,
+                        'unidadeMedida': unidadeMedida})
 
-  
-  # plotarGrafico(dadosMaquina)
+  print(pd_df)
+
+  print("TRANSFORMANDO O DF EM R")
+
+  # Conversor de data frame do pandas para o data frame em r
+  with localconverter(ro.default_converter + pandas2ri.converter):
+    dadosMaquina = ro.conversion.py2rpy(pd_df)
+
+  print(dadosMaquina)
+
+  print("PLOTANDO GRAFICO")
+  plotarGrafico(dadosMaquina, componente, metrica)
 
 
 
-def plotarGrafico(dadosMaquina):
+def plotarGrafico(dadosMaquina, componente, metrica):
 
-  metricas = ["cpu","ram","disk"]
+  for column in dadosMaquina:
+    print(type(column[0]))
 
-  for metrica in metricas:
+  print("METRICA: " + metrica)
+  print("CRIANDO IMAGEM")
 
-    # Gera um .png vazio
-    grdevices = importr('grDevices')
-    grdevices.png(file=f"/home/aluno/Music/analytics-py-r-html/public/graficos/{metrica}.png", width=1024, height=512)
+  # Gera um .png vazio
+  grdevices = importr('grDevices')
+  print("IMPORTANDO GR DEVICES")
+  grdevices.png(filename=f"./public/graficos/{componente}-{metrica}.png", width=1024, height=512)
 
-    # Plota o gráfico
-    pp = (ggplot2.ggplot(dadosMaquina) +
-        ggplot2.aes_string(x='id', y=metrica) +
-        ggplot2.geom_point() +
-        ggplot2.geom_line() +
-        ggplot2.geom_smooth(method = 'lm'))
+  print(dadosMaquina)
 
-    sleep(1)
-    pp.plot()
+  print("GERANDO O GRAFICO")
+  # Plota o gráfico
+  pp = (ggplot2.ggplot(dadosMaquina)
+  + ggplot2.aes_string(x='ids', y='valorLeitura')
+  # + ggplot2.xlim(0,LIMITE)
+  + ggplot2.ylim(0,100)
+  + ggplot2.geom_point() 
+  + ggplot2.geom_line() 
+  + ggplot2.geom_smooth(method = 'lm'))
 
-    # Salva o gráfico no .png
-    grdevices.dev_off()
+  print("SALVANDO IMAGEM")
 
-    # if cont >= 20:
-    #   ids.popleft()
-    #   cpuPercent.popleft()
-    #   ramPercent.popleft()
-    #   diskPercent.popleft()
+  sleep(1)
+  pp.plot()
+
+  # Salva o gráfico no .png
+  grdevices.dev_off()
+
 
 def conectar():
   if AMBIENTE_PRODUCAO:

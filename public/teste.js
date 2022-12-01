@@ -2,7 +2,6 @@
 // Importando dependências do node
 const fs = require('fs');
 const path = require('path');
-const { mainModule } = require('process');
 const spawn = require("child_process").spawn;
 const exec = require("child_process").exec;
 
@@ -99,6 +98,7 @@ fs.readdir(diretorioGraficos, function (err, files) {
     });
 }
 
+iniciar();
 
 
 

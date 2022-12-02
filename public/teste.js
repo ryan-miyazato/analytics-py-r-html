@@ -19,7 +19,7 @@ var dict = {
 function iniciar(nome, componente){
     acharPython();
     setTimeout(()=>{
-        ativarPython(nome, componente);
+        ativarPython();
     }, 1000);
 }
 

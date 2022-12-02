@@ -11,7 +11,9 @@ var pythonPath;
 
 var dict = {
     "nome" : "cpuPercent",
-    "componente": 106
+    "componente": 89,
+    "ano": 2022,
+    "mes": 11
 };
 
 function iniciar(nome, componente){
@@ -28,7 +30,10 @@ function acharPython(){
         if (error != null) {
             console.log('exec error: ' + error);
         } else {
-            pythonPath = stdout.replace(/(\r\n|\n|\r)/gm,"") + "\\python.exe";
+            pythonPath = stdout.replace(/(\r\n|\n|\r)/gm,"");
+            separador = definirSeparador(pythonPath);
+            executavel = pythonPath.indexOf("bin") < 0 ? "python.exe" : "python"
+            pythonPath += separador + executavel;
             console.log("pythonPath:", pythonPath);
         }
     });
@@ -43,10 +48,13 @@ function acharPython(){
 function ativarPython(){
 
     console.log("ATIVANDO O PYTHON");
-    
-    mudarVersaoPython(pyVersao);
+
+    if(pythonPath.indexOf("bin") < 0) mudarVersaoPython(pyVersao);
+
+    console.log("pythonPath atual:", pythonPath);
+
     setTimeout(()=>{
-        spawn(pythonPath, ["public/main.py", dict.nome, dict.componente]);
+        spawn(pythonPath, ["public/main.py", dict.nome, dict.componente, dict.ano, dict.mes]);
         apagarImagens();
     }, 1000);
 }
@@ -55,22 +63,27 @@ function mudarVersaoPython(versao){
     var novaVersao = "Python" + versao
 
     console.log(novaVersao)
-
-    if(pythonPath.indexOf(novaVersao) < 0){
-        var separador;
-
-        if(pythonPath.indexOf("/") >= 0){
-            separador = "/";
-        }else{
-            separador = "\\";
-        }
-        
-        pythonPath = pythonPath.split(separador);
-        pythonPath[pythonPath.length - 2] = novaVersao;
-        pythonPath = pythonPath.join(separador);
-
-        console.log(pythonPath);
+    if(pythonPath.indexOf("bin") < 0){
+        if(pythonPath.indexOf(novaVersao) < 0){
+            var separador = definirSeparador(pythonPath);
+            
+            pythonPath = pythonPath.split(separador);
+            pythonPath[pythonPath.length - 2] = novaVersao;
+            pythonPath = pythonPath.join(separador);
+    
+            console.log(pythonPath);
+        }  
     }
+}
+
+function definirSeparador(pathAtual){
+    var separador;
+    if(pathAtual.indexOf("/") >= 0){
+        separador = "/";
+    }else{
+        separador = "\\";
+    }
+    return separador;
 }
 
 

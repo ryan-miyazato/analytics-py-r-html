@@ -45,15 +45,15 @@ import rpy2.robjects.lib.ggplot2 as ggplot2
 AMBIENTE_PRODUCAO = True
 
 # Limite de dados da query do banco de dados
-LIMITE = 100 
+# LIMITE = 1000 
 
 def main():
 
   print("ENTROU NA MAIN")
-  capturarDados(sys.argv[1], sys.argv[2])
+  capturarDados(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])
 
 
-def capturarDados(metrica, componente):
+def capturarDados(metrica, componente, ano, mes):
 
   bdsql, cursor = conectar()
 
@@ -70,9 +70,9 @@ def capturarDados(metrica, componente):
   # Captura de dados de máquina
 
   if AMBIENTE_PRODUCAO:
-    query =  (f"SELECT TOP({LIMITE}) * FROM vw_{metrica} WHERE idComponente = {componente} ORDER BY horario DESC")
+    query =  (f"SELECT * FROM vw_{metrica} WHERE idComponente = {componente} AND YEAR(horario) = {ano} AND MONTH(horario) = {mes} ORDER BY horario;")
   else:
-    query = (f"SELECT * FROM vw_{metrica} WHERE idComponente = {componente} ORDER BY horario DESC LIMIT {LIMITE}")
+    query = (f"SELECT * FROM vw_{metrica} WHERE idComponente = {componente} AND YEAR(horario) = {ano} AND MONTH(horario) = {mes} ORDER BY horario;")
 
   
   cursor.execute(query)
